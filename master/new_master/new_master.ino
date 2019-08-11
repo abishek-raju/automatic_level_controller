@@ -1,8 +1,8 @@
 #include <avr/wdt.h>
 const int water_level_full = 2;
 const int water_level_medium=3;
-const int water_level_intermediate=4;
-const int water_level_low=5;
+const int water_level_low=4;
+const int motor_on_led_pin=5;
 int motor_on_relay = 8;
 int motor_off_relay=7;
 String tank_level="NN";
@@ -23,12 +23,13 @@ void setup()
   digitalWrite(motor_on_relay,HIGH);
   pinMode(motor_off_relay,OUTPUT);
   digitalWrite(motor_off_relay,HIGH);
+  pinMode(motor_on_led_pin,OUTPUT);
+  digitalWrite(motor_on_led_pin,LOW);
   delay(5000);
   Serial.println("program started and successfully connected to SERIAL monitor");
   delay(5000);//...........??????provide a certain delay before the motor starts so that the voltages settle
   pinMode(water_level_full, INPUT);
   pinMode(water_level_medium, INPUT);
-  pinMode(water_level_intermediate, INPUT);
   pinMode(water_level_low, INPUT);
   wdt_enable(WDTO_4S);
 }
@@ -91,9 +92,6 @@ void water_level_finder(){
   else if  (digitalRead(water_level_medium)==HIGH){
       tank_level="medium";
   }
-  else if  (digitalRead(water_level_intermediate)==HIGH){
-      tank_level="intermediate";
-  }
   else {
       tank_level="low";
   }
@@ -109,3 +107,11 @@ void water_level_finder(){
 //  Serial.println("water running sequence executed");
 //  wdt_reset();
 //}
+void motor_on_led(){
+  if(motor_status==1 and motor_on_led_pin==LOW){
+    digitalWrite(motor_on_led_pin,HIGH);
+  }
+  if(motor_status==0 and motor_on_led_pin==HIGH){
+    digitalWrite(motor_on_led_pin,LOW);
+  } 
+}
