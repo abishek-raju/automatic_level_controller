@@ -38,6 +38,7 @@ void loop()
 {
   Serial.println("running loop");
   water_level_finder();
+  motor_on_led();
   if (initialize==1){
   delay(3000);
   wdt_reset();
