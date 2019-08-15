@@ -2,10 +2,13 @@
 const int water_level_full = 2;
 const int water_level_medium=3;
 const int water_level_low=4;
-const int motor_on_led_pin=5;
+const int water_sensor=5;
+const int motor_on_led_pin=6;
 int motor_on_relay = 8;
 int motor_off_relay=7;
 String tank_level="NN";
+unsigned long startTimerTime=0; 
+unsigned long stopTimerTime=0;
 #include <SoftwareSerial.h>
 //
 int motor_status=0;//the motor status at any given time.this is a digital variable meaning the physical running of the motor is not specified.
@@ -31,14 +34,20 @@ void setup()
   pinMode(water_level_full, INPUT);
   pinMode(water_level_medium, INPUT);
   pinMode(water_level_low, INPUT);
+  pinMode(water_sensor, INPUT);
   wdt_enable(WDTO_4S);
 }
 
 void loop()
 {
+  Serial.println("red_flagstatus");
+  Serial.println(red_flag);
   Serial.println("running loop");
   water_level_finder();
   motor_on_led();
+  Serial.print("timer");
+  Serial.println(startTimerTime);
+  Serial.println(millis());
   if (initialize==1){
   delay(3000);
   wdt_reset();
@@ -59,10 +68,18 @@ void loop()
   wdt_reset();
   Serial.print("motor status:");
   Serial.println(motor_status);
+  delay(1000);
 
-//  if(motor_status==1){
-//      water_running();
-//  } 
+  if(motor_status==1 and (millis()-startTimerTime)>20000){
+      Serial.println("dry run check initiated");
+      water_running();
+      Serial.println("dry run check completed");
+  } 
+//  if(motor_status==0 and (millis()-stopTimerTime)>20000){
+//      Serial.println("dry run check initiated");
+//      red_flag=0;
+//      Serial.println("dry run check completed");
+//  }
 }
 /////
 void motor_start(){
@@ -72,6 +89,8 @@ void motor_start(){
   digitalWrite(motor_on_relay,HIGH);
   Serial.println("motor starting sequence executed");
   motor_status=1;
+  Serial.println(millis());
+  startTimerTime=millis();
   wdt_reset();
 }
 
@@ -83,12 +102,15 @@ void motor_stop(){
   digitalWrite(motor_off_relay,HIGH);
   Serial.println("motor stopping assequence executed");
   motor_status=0;
+  stopTimerTime=millis();
   wdt_reset();
 }
 
 void water_level_finder(){
+  delay(150);
   if  (digitalRead(water_level_full)==HIGH){
       tank_level="full";
+      Serial.println(tank_level);
   }
   else if  (digitalRead(water_level_medium)==HIGH){
       tank_level="medium";
@@ -100,14 +122,15 @@ void water_level_finder(){
   Serial.println(String(tank_level));
   Serial.println("water level finder executed");
 }
-//void water_running(){
-//  red_flag=0;
-//  if(water_sensor==0){
-//    red_flag==1;
+void water_running(){
+//  if(digitalRead(water_sensor)==LOW){
+//    Serial.println("red_flag_raised");
+//    red_flag=1;
 //  }
 //  Serial.println("water running sequence executed");
-//  wdt_reset();
-//}
+  red_flag=0;
+  wdt_reset();
+}
 void motor_on_led(){
   if(motor_status==1 and motor_on_led_pin==LOW){
     digitalWrite(motor_on_led_pin,HIGH);
