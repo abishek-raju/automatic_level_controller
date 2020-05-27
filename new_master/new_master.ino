@@ -7,7 +7,7 @@ const int water_level_intermediate=2;
 const int water_sensor=5;
 const int motor_on_led_pin=6;
 const int red_flag_led=7;
-//int motor_on_relay = 8;
+int motor_on_relay = 8;
 int motor_off_relay=9;
 const int manual_Start_auto_Off_switch=10;
 const int semi_auto_mode_light=11;
@@ -30,26 +30,25 @@ void setup()
   //some of the setup is done here
   Serial.begin(9600);//for screen output
   delay(2000); 
-//  pinMode(motor_on_relay,OUTPUT);
-//  digitalWrite(motor_on_relay,HIGH);
-//  pinMode(motor_off_relay,OUTPUT);
-//  digitalWrite(motor_off_relay,HIGH);
-//  pinMode(motor_on_led_pin,OUTPUT);
-//  digitalWrite(motor_on_led_pin,LOW);
-//  pinMode(red_flag_led, OUTPUT);
-//  digitalWrite(red_flag_led,LOW);
+  pinMode(motor_on_relay,OUTPUT);
+  digitalWrite(motor_on_relay,HIGH);
+  pinMode(motor_off_relay,OUTPUT);
+  digitalWrite(motor_off_relay,HIGH);
+  pinMode(motor_on_led_pin,OUTPUT);
+  digitalWrite(motor_on_led_pin,LOW);
+  pinMode(red_flag_led, OUTPUT);
+  digitalWrite(red_flag_led,LOW);
   pinMode(semi_auto_mode_light, OUTPUT);
   digitalWrite(semi_auto_mode_light,LOW);
-//  pinMode(auto_mode_light, OUTPUT);
-//  digitalWrite(auto_mode_light,LOW);
-//  delay(5000);
+  pinMode(auto_mode_light, OUTPUT);
+  digitalWrite(auto_mode_light,LOW);
   Serial.println("program started and successfully connected to SERIAL monitor");
   delay(5000);//...........??????provide a certain delay before the motor starts so that the voltages settle
   pinMode(water_level_full, INPUT);
   pinMode(water_level_medium, INPUT);
   pinMode(water_level_intermediate, INPUT);
-//  pinMode(water_sensor, INPUT);
-//  pinMode(manual_Start_auto_Off_switch, INPUT);
+  pinMode(water_sensor, INPUT);
+  pinMode(manual_Start_auto_Off_switch, INPUT);
   pinMode(voltage_input_pin,INPUT);
   if ((digitalRead(manual_Start_auto_Off_switch)==HIGH) and (initialize==1)){
     led_indicator(semi_auto_mode_light,true);
@@ -75,9 +74,10 @@ void setup()
 
 void loop()
 {
-  Serial.println("running loop");
+  Serial.println("\nrunning loop");
   Serial.print("red_flagstatus = ");
   Serial.println(red_flag);
+  led_indicator(red_flag_led,red_flag);
   tank_level_protocol=water_level_finder(water_level_intermediate,water_level_medium,water_level_full);
   Serial.print("tank_level_protocol = ");
   Serial.println(String(tank_level_protocol));
@@ -92,7 +92,7 @@ void loop()
      motor_status=false;
      Serial.println("motor has stopped");
   }
-  if((motor_status==false) and (red_flag==false) and (tank_level_protocol==0) and (mode_0f_Operation==true) and (voltage_flag==true) and (time_flag==true)){
+  if((motor_status==false) and (red_flag==false) and (tank_level_protocol==0) and (mode_0f_Operation_auto==true) and (voltage_flag==true) and (time_flag==true)){
     ///start the motor if everything is ok 
       motor_start();
       wdt_reset();
@@ -101,24 +101,14 @@ void loop()
   }
   Serial.print("motor_status = ");
   Serial.println(motor_status);
-//  wdt_reset();
-//  Serial.print("motor status:");
-//  Serial.println(motor_status);
-//  delay(2000);
-//  if(motor_status==1 and (millis()-startTimerTime)>120000){
-//      Serial.println("dry run check initiated###############################################################");
-//      water_running();
-//      Serial.println("dry run check completed");
-//  } 
-//  Serial.println(mode_0f_Operation);
-//  semi_0r_auto_light();
-////  if(motor_status==0 and (millis()-stopTimerTime)>60000){
-////      Serial.println("dry run check initiated");
-////      red_flag=0;
-////      Serial.println("dry run check completed");
-////  }
-
-  delay(1000);
+  wdt_reset();
+  led_indicator(motor_on_led_pin,motor_status);
+  if(motor_status==true and (millis()-startTimerTime)>120000){
+      Serial.println("dry run check initiated###############################################################");
+      red_flag=water_running(water_sensor);
+      Serial.println("dry run check completed");
+  } 
+delay(1000);
 }
 /////
 void motor_start(){
@@ -163,9 +153,6 @@ int water_level_finder(int wt_lvl_int,int wt_lvl_med,int wt_lvl_full){
     wdt_reset();
     i=i+1;
   }
-//  Serial.print("tank_protocol=");
-//  Serial.println(String(tank_protocol));
-//  Serial.println("water level finder executed");
   return tank_protocol;
 }
 void led_indicator(int led_pin,boolean high_low){
@@ -178,31 +165,16 @@ void led_indicator(int led_pin,boolean high_low){
   } 
   wdt_reset();
 }
-//void water_running(){
-//  if(digitalRead(water_sensor)==LOW){
+boolean water_running(int wtr_sensor){
+  wdt_reset();
+  if(digitalRead(wtr_sensor)==LOW){
 //    Serial.println("red_flag_raised");
-//    red_flag=1;
-//    
-//  }
-//  Serial.println("water running sequence executed");
-//  wdt_reset();
-//}
-//void motor_on_led(){
-//  if(motor_status==1){
-//    digitalWrite(motor_on_led_pin,HIGH);
-//  }
-//  if(motor_status==0){
-//    digitalWrite(motor_on_led_pin,LOW);
-//  } 
-//}
-//void red_flag_light(){
-//  if (red_flag==1){
-//    digitalWrite(red_flag_led,HIGH);
-//  }
-//  else{
-//     digitalWrite(red_flag_led,LOW);
-//  }
-//}
+    return true;
+  }
+  else{
+    return false;
+  }
+}
 boolean manual_Start_auto_Off(int mtr_off_relay){
   wdt_reset();
   int mtr_sts=1;
@@ -210,34 +182,22 @@ boolean manual_Start_auto_Off(int mtr_off_relay){
   wdt_reset();
   return true;
 }
-//void semi_0r_auto_light(){
-//  if (mode_0f_Operation=="auto"){
-//    
-//    digitalWrite(auto_mode_light,HIGH);
-//    digitalWrite(semi_auto_mode_light,LOW);
-//    
-//  }
-//  if (mode_0f_Operation=="semi_auto"){
-//    digitalWrite(semi_auto_mode_light,HIGH);
-//    digitalWrite(auto_mode_light,LOW);
-//  }
-//}
 boolean voltage_check_function(int vlt_inp_pin){
   wdt_reset();
   if (digitalRead(vlt_inp_pin)==HIGH){
     return true;
   }
   else if(digitalRead(vlt_inp_pin)==LOW){
-    return false;
+    return false;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////change to false
   }
 }
 
 boolean read_time_and_Set_flag(int time_inp_pin ){
   wdt_reset();
   if (digitalRead(time_inp_pin)==HIGH){
-    return true;
+    return false;
   }
   else if(digitalRead(time_inp_pin)==LOW){
-    return false;
+    return false;////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////change to false
   }
 }
